@@ -1,0 +1,15 @@
+function nginxondocker() {
+    if [ $(ps -elf | grep docker | wc -l) -gt 0 ];
+    then
+        echo -n $(docker stop nginx 2>&1) | sed 's/Error response from daemon://'
+        echo -n $(docker rm nginx 2>&1)   | sed 's/Error response from daemon://'
+        docker pull nginx
+        docker run --detach --publish 49001:80 --name nginx nginx
+        echo -n "Waiting for nginx process to start ."
+        until [ $(curl -o /dev/null --silent --head --write-out '%{http_code}\n' http://127.0.0.1:49001) -eq 200 ]; do echo -n '.'; sleep 1; done
+        echo
+        echo "Browse to http://localhost:49001"
+    else
+        echo "Can't find any docker processes.  Is Docker really running? :/"
+    fi
+}
